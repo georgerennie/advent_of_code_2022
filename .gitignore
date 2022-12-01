@@ -1,0 +1,3 @@
+*cookies.txt
+*.smt2
+!*.jinja.smt2
