@@ -14,6 +14,12 @@ with open(input_path, "r") as f:
 template_path = Path(str(args.day)).with_suffix(".jinja.smt2")
 with open(template_path, "r") as f:
     template = jinja2.Template(f.read())
-    smt = template.render(input_lines = input_lines)
+
+    def chunks(lst, n):
+        """Yield successive n-sized chunks from lst."""
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
+
+    smt = template.render(input_lines=input_lines, len=len, chunks=chunks)
     print(smt)
 

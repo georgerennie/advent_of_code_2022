@@ -1,0 +1,51 @@
+; This was a failed first attempt to solve this problem using the string theory
+
+(set-option :produce-models true)
+(set-logic ALL)
+
+; Part 1
+
+(define-fun common_char ((s String) (c String)) Bool
+	(let ((half_len (div (str.len s) 2)))
+	(let ((head (str.substr s 0 half_len))
+		  (tail (str.substr s half_len (str.len s))))
+	(and
+		(= (str.len c) 1)
+		(str.contains head c)
+		(str.contains tail c)
+	)))
+)
+
+; Get priority of character
+(define-fun priority_char ((s String)) Int
+	(let ((ord (str.to_code s)))
+	(- ord (ite (>= ord 97) 96 38)))
+)
+
+; Get priority of string by splitting etc. This should be asserted
+(define-fun priority_str ((s String) (p Int)) Bool
+	(exists ((common String))
+	(and
+		(common_char s common)
+		(= p (priority_char common))
+	))
+)
+
+{% for line in input_lines %}
+(declare-const priority_{{ loop.index }} Int)
+{%- endfor %}
+
+(assert
+	(and
+		{%- for line in input_lines %}
+		(priority_str "{{line}}" priority_{{ loop.index }})
+		{%- endfor %}
+	)
+)
+
+(define-fun part_1 () Int
+	(+{%- for line in input_lines %} priority_{{ loop.index }}{%- endfor %})
+)
+
+(check-sat)
+(get-value (part_1))
