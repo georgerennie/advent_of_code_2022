@@ -7,8 +7,7 @@
 (define-fun gate ((top Int) (x Int)) Int (ite (< x top) x 0))
 (define-fun max-below ((top Int) (x Int) (y Int)) Int
 	(let ((m (max (gate top x) (gate top y))))
-		(ite (< m top) m 0))
-)
+		(ite (< m top) m 0)))
 
 ; Calculates the maximum input sum that is below top
 (define-fun max-val-below ((top Int)) Int
@@ -16,9 +15,7 @@
 	{% if line == "" %})
 	(max-below top (+ 0{% else %} {{ line }}{% endif %}
 	{%- endfor %}) 0)
-	{% for line in input_lines if line == "" %})
-	{%- endfor %}
-)
+	{%- for line in input_lines if line == "" %}){%- endfor %})
 
 (define-fun max-val () Int (max-val-below 1000000000000000000))
 (define-fun second-val () Int (max-val-below max-val))

@@ -24,24 +24,19 @@
 	(or
 		(and (= us Rock)     (= opp Scissors))
 		(and (= us Paper)    (= opp Rock))
-		(and (= us Scissors) (= opp Paper))
-	)
-)
+		(and (= us Scissors) (= opp Paper))))
 
 (define-fun lose ((opp Choice) (us Choice)) Bool (win us opp))
 (define-fun draw ((opp Choice) (us Choice)) Bool (= opp us))
 
 (define-fun outcome ((opp Choice) (us Choice)) Int
-	(ite (win opp us) 6 (ite (draw opp us) 3 0))
-)
+	(ite (win opp us) 6 (ite (draw opp us) 3 0)))
 
 (define-fun score ((opp Choice) (us Choice)) Int
-	(+ (val us) (outcome opp us))
-)
+	(+ (val us) (outcome opp us)))
 
 (define-fun part-1 () Int
-	(+{%- for line in input_lines %} (score {{ line }}){%- endfor %})
-)
+	(+{%- for line in input_lines %} (score {{ line }}){%- endfor %}))
 
 ; Part 2
 
@@ -49,17 +44,14 @@
 	(and
 		(=> (= res X) (lose opp us))
 		(=> (= res Y) (draw opp us))
-		(=> (= res Z) (win opp us))
-	)
-)
+		(=> (= res Z) (win opp us))))
 
 {%- for line in input_lines %}
 (declare-const choice-{{ loop.index }} Choice) (assert (force {{ line }} choice-{{ loop.index }}))
 {%- endfor %}
 
 (define-fun part-2 () Int
-	(+{%- for line in input_lines %} (score {{ line.split()[0] }} choice-{{ loop.index }}){%- endfor %})
-)
+	(+{%- for line in input_lines %} (score {{ line.split()[0] }} choice-{{ loop.index }}){%- endfor %}))
 
 (check-sat)
 (get-value (part-1 part-2))

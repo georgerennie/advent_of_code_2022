@@ -12,24 +12,19 @@
 	(and
 		(= (str.len c) 1)
 		(str.contains head c)
-		(str.contains tail c)
-	)))
-)
+		(str.contains tail c)))))
 
 ; Get priority of character
 (define-fun priority-char ((s String)) Int
 	(let ((ord (str.to-code s)))
-	(- ord (ite (>= ord 97) 96 38)))
-)
+	(- ord (ite (>= ord 97) 96 38))))
 
 ; Get priority of string by splitting etc. This should be asserted
 (define-fun priority-str ((s String) (p Int)) Bool
 	(exists ((common String))
 	(and
 		(common-char s common)
-		(= p (priority-char common))
-	))
-)
+		(= p (priority-char common)))))
 
 {% for line in input_lines %}
 (declare-const priority-{{ loop.index }} Int)
@@ -39,13 +34,10 @@
 	(and
 		{%- for line in input_lines %}
 		(priority-str "{{line}}" priority-{{ loop.index }})
-		{%- endfor %}
-	)
-)
+		{%- endfor %}))
 
 (define-fun part-1 () Int
-	(+{%- for line in input_lines %} priority-{{ loop.index }}{%- endfor %})
-)
+	(+{%- for line in input_lines %} priority-{{ loop.index }}{%- endfor %}))
 
 (check-sat)
 (get-value (part-1))
