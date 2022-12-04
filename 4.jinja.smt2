@@ -17,14 +17,12 @@
 (define-fun either-contains ((a Range) (b Range)) Bool
 	(or (contains a b) (contains b a)))
 
-; Convert to int for simplicity
-(define-fun either-contains-i ((a Range) (b Range)) Int
-	(ite (either-contains a b) 1 0))
+(define-fun int ((b Bool)) Int (ite b 1 0))
 
 (define-fun part-1 () Int
 	(+
 		{%- for line in input_lines %}
-		(either-contains-i{% for elf in line.split(",") %} (range{% for n in elf.split("-") %} {{ n }}{% endfor %}){% endfor %})
+		(int (either-contains{% for elf in line.split(",") %} (range{% for n in elf.split("-") %} {{ n }}{% endfor %}){% endfor %}))
 		{%- endfor %}))
 
 ; Part 2
@@ -36,14 +34,10 @@
 		(in-range (low  b) a)
 		(in-range (high b) a)))
 
-; Convert to int for simplicity
-(define-fun overlaps-i ((a Range) (b Range)) Int
-	(ite (overlaps a b) 1 0))
-
 (define-fun part-2 () Int
 	(+
 		{%- for line in input_lines %}
-		(overlaps-i{% for elf in line.split(",") %} (range{% for n in elf.split("-") %} {{ n }}{% endfor %}){% endfor %})
+		(int (overlaps{% for elf in line.split(",") %} (range{% for n in elf.split("-") %} {{ n }}{% endfor %}){% endfor %}))
 		{%- endfor %}))
 
 (check-sat)
