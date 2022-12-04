@@ -39,7 +39,7 @@
 	(+ (val us) (outcome opp us))
 )
 
-(define-fun part_1 () Int
+(define-fun part-1 () Int
 	(+{%- for line in input_lines %} (score {{ line }}){%- endfor %})
 )
 
@@ -54,12 +54,12 @@
 )
 
 {%- for line in input_lines %}
-(declare-const choice_{{ loop.index }} Choice) (assert (force {{ line }} choice_{{ loop.index }}))
+(declare-const choice-{{ loop.index }} Choice) (assert (force {{ line }} choice-{{ loop.index }}))
 {%- endfor %}
 
-(define-fun part_2 () Int
-	(+{%- for line in input_lines %} (score {{ line.split()[0] }} choice_{{ loop.index }}){%- endfor %})
+(define-fun part-2 () Int
+	(+{%- for line in input_lines %} (score {{ line.split()[0] }} choice-{{ loop.index }}){%- endfor %})
 )
 
 (check-sat)
-(get-value (part_1 part_2))
+(get-value (part-1 part-2))

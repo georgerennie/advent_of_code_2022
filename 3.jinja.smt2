@@ -12,31 +12,31 @@
 {%- endfor %}
 
 {% for line in input_lines -%}
-(declare-const line_{{ loop.index }} (_ BitVec 16))
-(assert (= (oh line_{{ loop.index }}) (bvand
+(declare-const line-{{ loop.index }} (_ BitVec 16))
+(assert (= (oh line-{{ loop.index }}) (bvand
 	(bvor {{ " ".join(line[:len(line)//2]) }})
 	(bvor {{ " ".join(line[len(line)//2:]) }})
 )))
 {% endfor %}
 
-(define-fun part_1 () (_ BitVec 16)
-	(bvadd {%- for line in input_lines %} line_{{ loop.index }}{%- endfor %})
+(define-fun part-1 () (_ BitVec 16)
+	(bvadd {%- for line in input_lines %} line-{{ loop.index }}{%- endfor %})
 )
 
 ; Part 2
 
 {% for chunk in chunks(input_lines, 3) %}
-(declare-const group_{{ loop.index }} (_ BitVec 16))
-(assert (= (oh group_{{ loop.index }}) (bvand
+(declare-const group-{{ loop.index }} (_ BitVec 16))
+(assert (= (oh group-{{ loop.index }}) (bvand
 	{%- for line in chunk %}
 	(bvor {{ " ".join(line) }})
 	{%- endfor %}
 )))
 {% endfor %}
 
-(define-fun part_2 () (_ BitVec 16)
-	(bvadd {%- for chunk in chunks(input_lines, 3) %} group_{{ loop.index }}{%- endfor %})
+(define-fun part-2 () (_ BitVec 16)
+	(bvadd {%- for chunk in chunks(input_lines, 3) %} group-{{ loop.index }}{%- endfor %})
 )
 
 (check-sat)
-(get-value (part_1 part_2))
+(get-value (part-1 part-2))
