@@ -1,0 +1,5 @@
+root = true
+
+[*.smt2]
+indent_style = tab
+indent_size = 4
