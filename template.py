@@ -20,6 +20,6 @@ with open(template_path, "r") as f:
         for i in range(0, len(lst), n):
             yield lst[i:i + n]
 
-    smt = template.render(input_lines=input_lines, len=len, chunks=chunks)
+    smt = template.render(input_lines=input_lines, len=len, chunks=chunks, ord=ord)
     print(smt)
 

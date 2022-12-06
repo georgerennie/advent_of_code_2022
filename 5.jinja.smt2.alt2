@@ -1,0 +1,129 @@
+; Another attempt at day 5 that doesnt solve in reasonable time. The requirement
+; to move an arbitrary number of boxes each day seems to be a limiting factor
+; as this implementation requires forall quantification. Using bitvectors will
+; likely help make this tractable
+
+(set-option :produce-models true)
+(set-logic ALIA)
+
+; Part 1
+
+(declare-sort Crate 0)
+
+(declare-sort State 0)
+(declare-fun get-heads ((State)) (Array Int Int))
+(declare-fun get-stack ((State) (Crate)) Int)
+(declare-fun get-index ((State) (Crate)) Int)
+
+(define-fun head ((state State) (stack Int)) Int
+	(select (get-heads state) stack))
+
+(define-fun is-head ((state State) (crate Crate) (stack Int)) Bool
+	(= (get-index state crate) (head state stack)))
+
+(define-fun place-crate ((state State) (crate Crate) (stack Int) (index Int)) Bool
+	(and
+		(= (get-stack state crate) stack)
+		(= (get-index state crate) index)))
+
+(define-fun crate-invar ((state State) (next-state State) (crate Crate)) Bool
+	(place-crate next-state crate (get-stack state crate) (get-index state crate)))
+
+(declare-const s0 State)
+
+(define-fun init ((crate Crate) (stack Int) (index Int)) Bool
+	(and
+		(place-crate s0 crate stack index)
+		(>= (head s0 stack) index)))
+
+(define-fun init-no-crate ((stack Int) (index Int)) Bool
+	(< (head s0 stack) index))
+
+(assert
+	(and
+		{%- for i in range(1,10) %}
+		(<= (head s0 {{ i }}) 0)
+		{%- endfor -%}))
+
+{%- set input_break_idx = input_lines.index("") %}
+{%- for line in input_lines[:input_break_idx-1] %}
+{%- set i = loop.index - 1 %}
+{% for char in line[1::4] %}
+{%- set idx = i * len(line[1::4]) + loop.index %}
+{%- if char != " " %}
+(declare-const crate-{{ idx }} Crate) (assert (init crate-{{ idx }} {{ loop.index }} {{ -i }}))
+{%- else %}
+(assert (init-no-crate {{ loop.index }} {{ -i }}))
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
+
+(define-fun update-heads ((state State) (next-state State) (num Int) (src Int) (dest Int)) Bool
+	(forall ((stack Int))
+	(let ((head (head state stack)) (next-head (head next-state stack)))
+	(ite (= stack src) (= next-head (- head num))
+	(ite (= stack dest) (= next-head (+ head num))
+	(= next-head head))))))
+
+(define-fun next-heads ((state State) (num Int) (src Int) (dest Int)) (Array Int Int)
+	(let ((src-head (head state src)) (dest-head (head state dest)))
+	(store
+		(store (get-heads state) src (- src-head num))
+		dest
+		(+ dest-head num))))
+
+(define-fun move-crate ((state State) (next-state State) (crate Crate) (src Int) (dest Int)) Bool
+	(let
+		((src-head (head state src))
+		(dest-head (head state dest))
+		(src-index (get-index state crate)))
+	(let
+		((dest-index (- (+ src-head dest-head 1) src-index)))
+	(place-crate next-state crate dest dest-index))))
+
+(define-fun exec ((state State) (next-state State) (num Int) (src Int) (dest Int)) Bool
+	(and
+		(= (get-heads next-state) (next-heads state num src dest))
+
+		(let ((next-src-head (head next-state src)))
+		; TODO: Try getting rid of this forall
+		; Also this logic seems slightly wrong
+		(forall ((crate Crate))
+		(let ((stack (get-stack state crate)) (index (get-index state crate)))
+		(ite (and (= stack src) (> index next-src-head))
+			(move-crate state next-state crate src dest)
+			(crate-invar state next-state crate)))))))
+
+(define-fun head-ascii ((state State) (stack Int)) Int
+	{%- for line in input_lines[:input_break_idx-1] %}
+	{%- set i = loop.index - 1 %}
+	{%- for char in line[1::4] %}
+	{%- set idx = i * len(line[1::4]) + loop.index %}
+	{%- if char != " " %}
+	(ite (is-head state crate-{{ idx }} stack) {{ ord(char) }}
+	{%- endif %}
+	{%- endfor %}
+	{%- endfor %}
+	0)
+	{%- for line in input_lines[:input_break_idx-1] -%}
+	{%- for char in line[1::4] -%}
+	{%- if char != " " -%}){%- endif -%}
+	{%- endfor %}
+	{%- endfor %}
+
+{% for line in input_lines[input_break_idx+1:] %}
+{%- set sl = line.split() %}
+(declare-const s{{ loop.index }} State) (assert (exec s{{ loop.index - 1}} s{{ loop.index }} {{ "%s %s %s" % (sl[1], sl[3], sl[5]) }}))
+{%- endfor %}
+
+{% set commands = len(input_lines) - input_break_idx - 1 %}
+{%- for i in range(1,10) %}
+(define-fun part-1-{{ i }} () Int (head-ascii s{{ commands }} {{ i }}))
+{%- endfor %}
+
+(check-sat)
+(get-value
+	(
+		{%- for i in range(1,10) %}
+		part-1-{{ i }}
+		{%- endfor -%}))

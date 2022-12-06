@@ -1,0 +1,103 @@
+(set-option :produce-models true)
+(set-logic ALIA)
+
+; This is an attempt to solve the problem by defining a transition system,
+; where the stacks have been formalised as arrays with head pointers.
+; Unfortunately the way I have done it here requires a forall quantifier in
+; the move function which seems to dramatically hurt solver time
+
+; Part 1
+
+(declare-sort Char 0)
+
+{%- set chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+{% for c in chars %}
+(declare-const {{ c }} Char)
+{%- endfor %}
+(declare-const nullchar Char)
+
+(assert (distinct nullchar{%- for c in chars %} {{ c }}{%- endfor %}))
+
+(declare-sort State 0)
+(declare-fun stacks ((State)) (Array Int (Array Int Char)))
+(declare-fun heads  ((State)) (Array Int Int))
+
+
+(define-fun stack-sel ((state State) (stack-index Int) (place-index Int)) Char
+	(select (select (stacks state) stack-index) place-index))
+
+(define-fun head-sel ((state State) (stack-index Int)) Int
+	(select (heads state) stack-index))
+
+(define-fun head ((state State) (stack-index Int)) Char
+	(stack-sel state stack-index (head-sel state stack-index)))
+
+{%- set input_break_idx = input_lines.index("") %}
+
+(define-fun init-heads ((state State)) Bool
+	(and
+		{%- for i in range(1,10) %}
+		(<= (head-sel state {{ i }}) 0)
+		{%- endfor -%}))
+
+(define-fun set-init ((state State) (stack-index Int) (place-index Int) (val Char)) Bool
+	(let ((head (head-sel state stack-index)))
+	(ite (= val nullchar)
+		(< head place-index)
+		(and
+			(= (stack-sel state stack-index place-index) val)
+			(>= head place-index)))))
+
+(define-fun initial-state ((state State)) Bool
+	(and
+		(init-heads state)
+		{%- for i in range(input_break_idx - 1) %}
+		{%- for j in range(1, len(input_lines[i]), 4) %}
+		{%- set c = (input_lines[i][j], "nullchar")[input_lines[i][j] == " "] %}
+		(set-init state {{ (j // 4) + 1 }} {{ 0 - i }} {{ c }})
+		{%- endfor %}
+		{%- endfor %}))
+
+(define-fun invar-char ((state State) (next-state State) (stack Int) (index Int)) Bool
+	(= (stack-sel state stack index) (stack-sel next-state stack index)))
+
+(define-fun invar-stack ((state State) (next-state State) (stack Int)) Bool
+	(and
+		(= (head-sel state stack) (head-sel next-state stack))
+		(forall ((index Int)) (invar-char state next-state stack index))))
+
+(define-fun remove-src ((state State) (next-state State) (num Int) (stack Int)) Bool
+	(let ((head (head-sel state stack)) (next-head (head-sel next-state stack)))
+	(and
+		(= next-head (- head num))
+		(forall ((index Int))
+			(=> (<= index next-head) (invar-char state next-state stack index))))))
+
+(define-fun add-dest ((state State) (next-state State) (num Int) (src Int) (dest Int)) Bool
+	(let ((head (head-sel state dest)) (next-head (head-sel next-state dest)))
+	(and
+		(= next-head (+ head num))
+		(forall ((index Int))
+			(ite (<= index head) (invar-char state next-state dest index)
+				(=> (<= index next-head)
+					(let ((src-head (head-sel state src)))
+					(let ((src-index (- (+ head src-head 1) index)))
+					(= (stack-sel next-state dest index)
+						(stack-sel state src src-index))))))))))
+
+(define-fun exec ((state State) (next-state State) (num Int) (src Int) (dest Int)) Bool
+	(let ((head (head-sel state src)))
+	(forall ((stack Int))
+		(ite (= stack src) (remove-src state next-state num src)
+		(ite (= stack dest) (add-dest state next-state num src dest)
+			(invar-stack state next-state stack))))))
+
+(declare-const s0 State)
+(assert (initial-state s0))
+(declare-const s1 State)
+(assert (exec s0 s1 4 9 1))
+(define-fun a () Char (head s0 1))
+(define-fun b () Char (head s1 1))
+
+(check-sat)
+(get-value (a b))
